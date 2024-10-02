@@ -1,0 +1,12 @@
+[
+    {
+        title: 'Redistribuição Deteriorada',
+        path: 'redistribuicao_deteriorada.txt',
+        created_at: '2020/08/08'
+    },
+    {
+        title: 'Reprimido',
+        path: 'reprimido.txt',
+        created_at: '2020/08/09'
+    }
+]
