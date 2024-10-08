@@ -1,22 +1,26 @@
 [
     {
+        "id": 1,
         "title": "Redistribuição Deteriorada",
         "path": "redistribuicao_deteriorada.txt",
-        "created_at": "2020/08/08"
+        "created_at": "2020-08-08"
     },
     {
+        "id": 2,
         "title": "Reprimido",
         "path": "reprimido.txt",
-        "created_at": "2020/08/09"
+        "created_at": "2020-08-09"
     },
     {
+        "id": 3,
         "title": "Advogados Digitais",
         "path": "advogados_digitais.txt",
-        "created_at": "2020/08/10"
+        "created_at": "2020-08-10"
     },
     {
+        "id": 4,
         "title": "Tolo",
         "path": "tolo.txt",
-        "created_at": "2020/08/11"
+        "created_at": "2020-08-11"
     }
 ]

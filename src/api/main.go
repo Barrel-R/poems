@@ -6,15 +6,23 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
-type Poem struct {
+type RawPoem struct {
 	Id         uint32 `json:"id"`
 	Title      string `json:"title"`
-	Path       string `json:"path"` // TODO : change path to load contents of file
+	Path       string `json:"path"`
 	Created_at string `json:"created_at"`
+}
+
+type Poem struct {
+	Id         uint32    `json:"id"`
+	Title      string    `json:"title"`
+	Content    string    `json:"content"`
+	Created_at time.Time `json:"created_at"`
 }
 
 type ApiResponse struct {
@@ -23,17 +31,47 @@ type ApiResponse struct {
 	Status  uint   `json:"status"`
 }
 
+func getPoemContent(rawPoem RawPoem) (Poem, error) {
+	content, err := os.ReadFile("../storage/" + rawPoem.Path)
+
+	if err != nil {
+		return Poem{}, fmt.Errorf("couldn't read the poem text file: %w", err)
+	}
+
+	date, err := time.Parse(time.DateOnly, rawPoem.Created_at)
+
+	if err != nil {
+		return Poem{}, fmt.Errorf("Error while parsing the poem date: %w", err)
+	}
+
+	poem := Poem{rawPoem.Id, rawPoem.Title, string(content), date}
+
+	return poem, err
+}
+
 func GetPoems(w http.ResponseWriter, r *http.Request) {
 	poemsFile, err := os.ReadFile("../storage/poemas.json")
 
 	if err != nil {
-		log.Fatal("Error while getting poems: ", err)
+		log.Fatal("Couldn't read the poems file: ", err)
+	}
+
+	var rawPoems []RawPoem
+
+	if err := json.Unmarshal(poemsFile, &rawPoems); err != nil {
+		log.Fatal("Couldn't marshal the poems: ", err)
 	}
 
 	var poems []Poem
 
-	if err := json.Unmarshal(poemsFile, &poems); err != nil {
-		log.Fatal("Couldn't marshal the poems: ", err)
+	for _, rawPoem := range rawPoems {
+		poem, err := getPoemContent(rawPoem)
+
+		if err != nil {
+			log.Fatal("Couldn't get the poem content: ", err)
+		}
+
+		poems = append(poems, poem)
 	}
 
 	res := ApiResponse{poems, "List of poems retrieved successfully", http.StatusOK}
