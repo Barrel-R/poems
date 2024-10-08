@@ -1,20 +1,47 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/mux"
 )
 
 type Poem struct {
-	title      string
-	path       string
-	created_at uint64
+	Id         uint32 `json:"id"`
+	Title      string `json:"title"`
+	Path       string `json:"path"` // TODO : change path to load contents of file
+	Created_at string `json:"created_at"`
+}
+
+type ApiResponse struct {
+	Data    []Poem `json:"data"`
+	Message string `json:"message"`
+	Status  uint   `json:"status"`
 }
 
 func GetPoems(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "getting poems")
+	poemsFile, err := os.ReadFile("../storage/poemas.json")
+
+	if err != nil {
+		log.Fatal("Error while getting poems: ", err)
+	}
+
+	var poems []Poem
+
+	if err := json.Unmarshal(poemsFile, &poems); err != nil {
+		log.Fatal("Couldn't marshal the poems: ", err)
+	}
+
+	res := ApiResponse{poems, "List of poems retrieved successfully", http.StatusOK}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func ShowPoem(w http.ResponseWriter, r *http.Request) {
