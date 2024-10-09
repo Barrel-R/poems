@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type RawPoem struct {
@@ -26,9 +26,18 @@ type Poem struct {
 }
 
 type ApiResponse struct {
-	Data    []Poem `json:"data"`
-	Message string `json:"message"`
-	Status  uint   `json:"status"`
+	Data    interface{} `json:"data"`
+	Message string      `json:"message"`
+	Status  uint        `json:"status"`
+}
+
+type NotFoundError struct {
+	arg     uint32
+	message string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("%d - %s", e.arg, e.message)
 }
 
 func getPoemContent(rawPoem RawPoem) (Poem, error) {
@@ -49,21 +58,29 @@ func getPoemContent(rawPoem RawPoem) (Poem, error) {
 	return poem, err
 }
 
-func GetPoems(w http.ResponseWriter, r *http.Request) {
+func FindPoem(poemId uint32, poems []RawPoem) (RawPoem, error) {
+	for _, poem := range poems {
+		if poem.Id == poemId {
+			return poem, nil
+		}
+	}
+
+	return RawPoem{}, &NotFoundError{poemId, "couldn't find poem with id "}
+}
+
+func ReadPoemFile(pRawPoems *[]RawPoem) {
 	poemsFile, err := os.ReadFile("../storage/poemas.json")
 
 	if err != nil {
 		log.Fatal("Couldn't read the poems file: ", err)
 	}
 
-	var rawPoems []RawPoem
-
-	if err := json.Unmarshal(poemsFile, &rawPoems); err != nil {
+	if err := json.Unmarshal(poemsFile, pRawPoems); err != nil {
 		log.Fatal("Couldn't marshal the poems: ", err)
 	}
+}
 
-	var poems []Poem
-
+func LoadPoemContents(poems *[]Poem, rawPoems []RawPoem) {
 	for _, rawPoem := range rawPoems {
 		poem, err := getPoemContent(rawPoem)
 
@@ -71,8 +88,16 @@ func GetPoems(w http.ResponseWriter, r *http.Request) {
 			log.Fatal("Couldn't get the poem content: ", err)
 		}
 
-		poems = append(poems, poem)
+		*poems = append(*poems, poem)
 	}
+}
+
+func GetPoems(w http.ResponseWriter, r *http.Request) {
+	var rawPoems []RawPoem
+	var poems []Poem
+
+	ReadPoemFile(&rawPoems)
+	LoadPoemContents(&poems, rawPoems)
 
 	res := ApiResponse{poems, "List of poems retrieved successfully", http.StatusOK}
 
@@ -83,7 +108,29 @@ func GetPoems(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowPoem(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "showing poem")
+	var rawPoems []RawPoem
+	vars := mux.Vars(r)
+	poemId, err := strconv.ParseUint(vars["id"], 10, 32)
+
+	if err != nil {
+		log.Fatal("Couldn't parse the Poem ID: ", err)
+	}
+
+	ReadPoemFile(&rawPoems)
+
+	rawPoem, err := FindPoem(uint32(poemId), rawPoems)
+	poem, err := getPoemContent(rawPoem)
+
+	res := ApiResponse{poem, "Poem retrieved successfully", http.StatusOK}
+
+	if err != nil {
+		log.Fatal("Couldn't get the poem content: ", err)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func CreatePoem(w http.ResponseWriter, r *http.Request) {
