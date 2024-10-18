@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type RawPoem struct {
@@ -56,6 +58,35 @@ func getPoemContent(rawPoem RawPoem) (Poem, error) {
 	poem := Poem{rawPoem.Id, rawPoem.Title, string(content), date}
 
 	return poem, err
+}
+
+func getGreatestId() uint32 {
+	var poems []RawPoem
+
+	ReadPoemFile(&poems)
+
+	id := uint32(0)
+
+	for _, poem := range poems {
+		if poem.Id > id {
+			id = poem.Id
+		}
+	}
+
+	return id
+}
+
+func createPoemTextFile(poem Poem) error {
+	data, err := json.Marshal(poem.Content)
+
+	if err != nil {
+		fmt.Printf("error while marshaling the poem: %v\n", err)
+		return err
+	}
+
+	err = os.WriteFile("../storage/"+strings.Trim(strings.ToLower(poem.Title), " ")+".txt", data, 0644)
+
+	return nil
 }
 
 func FindPoem(poemId uint32, poems []RawPoem) (RawPoem, error) {
@@ -134,7 +165,56 @@ func ShowPoem(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePoem(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "creating poem")
+	id := getGreatestId() + 1
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+
+	if len(title) == 0 {
+		log.Fatal("The title must not be empty.")
+	}
+
+	if len(content) == 0 {
+		log.Fatal("The content must not be empty.")
+	}
+
+	poem := Poem{id, title, content, time.Now()}
+
+	err := createPoemTextFile(poem)
+
+	if err != nil {
+		log.Printf("error while saving poem text file: %v\n", err)
+		return
+	}
+
+	path := strings.Trim(strings.ToLower(poem.Title), " ") + ".txt"
+
+	rawPoem := RawPoem{id, poem.Title, path, time.Now().Format("2006-01-02")}
+
+	var jsonData []RawPoem
+	ReadPoemFile(&jsonData)
+
+	jsonData = append(jsonData, rawPoem)
+
+	data, err := json.Marshal(jsonData)
+
+	if err != nil {
+		log.Printf("error while marshaling the new created poem: %v\n", err)
+		return
+	}
+
+	err = os.WriteFile("../storage/poemas.json", data, 0644)
+
+	if err != nil {
+		log.Printf("error while saving the new JSON: %v\n", err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	res := ApiResponse{poem, "Poem created successfully", http.StatusOK}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func EditPoem(w http.ResponseWriter, r *http.Request) {
