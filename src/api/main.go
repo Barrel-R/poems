@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -103,11 +104,11 @@ func ReadPoemFile(pRawPoems *[]RawPoem) {
 	poemsFile, err := os.ReadFile("../storage/poemas.json")
 
 	if err != nil {
-		log.Fatal("Couldn't read the poems file: ", err)
+		log.Fatalf("Couldn't read the poems file: %v\n", err)
 	}
 
 	if err := json.Unmarshal(poemsFile, pRawPoems); err != nil {
-		log.Fatal("Couldn't marshal the poems: ", err)
+		log.Fatalf("Couldn't marshal the poems: %v\n", err)
 	}
 }
 
@@ -116,7 +117,7 @@ func LoadPoemContents(poems *[]Poem, rawPoems []RawPoem) {
 		poem, err := getPoemContent(rawPoem)
 
 		if err != nil {
-			log.Fatal("Couldn't get the poem content: ", err)
+			log.Fatalf("Couldn't get the poem content: %v\n", err)
 		}
 
 		*poems = append(*poems, poem)
@@ -144,7 +145,7 @@ func ShowPoem(w http.ResponseWriter, r *http.Request) {
 	poemId, err := strconv.ParseUint(vars["id"], 10, 32)
 
 	if err != nil {
-		log.Fatal("Couldn't parse the Poem ID: ", err)
+		log.Fatalf("Couldn't parse the Poem ID: %v\n", err)
 	}
 
 	ReadPoemFile(&rawPoems)
@@ -155,7 +156,7 @@ func ShowPoem(w http.ResponseWriter, r *http.Request) {
 	res := ApiResponse{poem, "Poem retrieved successfully", http.StatusOK}
 
 	if err != nil {
-		log.Fatal("Couldn't get the poem content: ", err)
+		log.Fatalf("Couldn't get the poem content: %v\n", err)
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -170,11 +171,11 @@ func CreatePoem(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 
 	if len(title) == 0 {
-		log.Fatal("The title must not be empty.")
+		log.Fatal("The title must not be empty.\n")
 	}
 
 	if len(content) == 0 {
-		log.Fatal("The content must not be empty.")
+		log.Fatal("The content must not be empty.\n")
 	}
 
 	poem := Poem{id, title, content, time.Now()}
@@ -222,18 +223,18 @@ func EditPoem(w http.ResponseWriter, r *http.Request) {
 	parsedId, err := strconv.ParseUint(id, 10, 32)
 
 	if err != nil {
-		log.Fatal("Couldn't parse the poem ID")
+		log.Fatal("Couldn't parse the poem ID\n")
 	}
 
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 
 	if len(title) == 0 {
-		log.Fatal("The title must not be empty.")
+		log.Fatal("The title must not be empty.\n")
 	}
 
 	if len(content) == 0 {
-		log.Fatal("The content must not be empty.")
+		log.Fatal("The content must not be empty.\n")
 	}
 
 	poem := Poem{uint32(parsedId), title, content, time.Now()}
@@ -281,7 +282,49 @@ func EditPoem(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePoem(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "deleting poem")
+	id := mux.Vars(r)["id"]
+	parsedId, err := strconv.ParseUint(id, 10, 32)
+
+	if err != nil {
+		log.Fatal("Couldn't parse the poem ID\n")
+	}
+
+	var jsonData []RawPoem
+	ReadPoemFile(&jsonData)
+
+	for i, poem := range jsonData {
+		if poem.Id == uint32(parsedId) {
+			jsonData = slices.Delete(jsonData, i, i+1)
+			// err := os.Remove("../storage/" + poem.Path)
+
+			// NOTE: add some sort of confirmation to remove the file?
+
+			// if err != nil {
+			// 	log.Printf("Couldn't remove the poem file: %v\n", err)
+			// }
+		}
+	}
+
+	data, err := json.Marshal(jsonData)
+
+	if err != nil {
+		log.Printf("error while marshaling the data: %v\n", err)
+		return
+	}
+
+	err = os.WriteFile("../storage/poemas.json", data, 0644)
+
+	if err != nil {
+		log.Printf("error while saving the new JSON: %v\n", err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	res := ApiResponse{nil, "Poem deleted successfully", http.StatusOK}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func createServer() {
