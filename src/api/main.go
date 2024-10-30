@@ -218,7 +218,66 @@ func CreatePoem(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditPoem(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "editing poem")
+	id := mux.Vars(r)["id"]
+	parsedId, err := strconv.ParseUint(id, 10, 32)
+
+	if err != nil {
+		log.Fatal("Couldn't parse the poem ID")
+	}
+
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+
+	if len(title) == 0 {
+		log.Fatal("The title must not be empty.")
+	}
+
+	if len(content) == 0 {
+		log.Fatal("The content must not be empty.")
+	}
+
+	poem := Poem{uint32(parsedId), title, content, time.Now()}
+
+	err = createPoemTextFile(poem)
+
+	if err != nil {
+		log.Printf("error while saving poem text file: %v\n", err)
+		return
+	}
+
+	path := strings.Trim(strings.ToLower(poem.Title), " ") + ".txt"
+
+	rawPoem := RawPoem{uint32(parsedId), title, path, time.Now().Format("2006-01-02")}
+
+	var jsonData []RawPoem
+	ReadPoemFile(&jsonData)
+
+	for i, poem := range jsonData {
+		if poem.Id == uint32(parsedId) {
+			jsonData[i] = rawPoem
+		}
+	}
+
+	data, err := json.Marshal(jsonData)
+
+	if err != nil {
+		log.Printf("error while marshaling the new created poem: %v\n", err)
+		return
+	}
+
+	err = os.WriteFile("../storage/poemas.json", data, 0644)
+
+	if err != nil {
+		log.Printf("error while saving the new JSON: %v\n", err)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	res := ApiResponse{poem, "Poem edited successfully", http.StatusOK}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func DeletePoem(w http.ResponseWriter, r *http.Request) {
