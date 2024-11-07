@@ -1,3 +1,15 @@
+.navbar {
+    background-color: black;
+    padding: 30px;
+}
+
+.nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
 .nav-link {
-    color: indigo;
+    color: white;
 }
