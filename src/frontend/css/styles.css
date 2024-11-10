@@ -1,15 +1,113 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #301E1D;
+}
+
+/* navigation */
 .navbar {
-    background-color: black;
-    padding: 30px;
+    background-color: #191010;
+    padding: 10px 50px;
 }
 
 .nav-list {
     list-style: none;
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: space-between;
 }
 
 .nav-link {
-    color: white;
+    color: #CBCCCC;
+    font-size: 35px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-bottom: 2px solid white;
+    text-decoration: none;
+}
+
+.nav-link:hover {
+    color: #8E8B7B;
+}
+
+
+/* fonts */
+
+@font-face {
+    font-family: "Crimson Text";
+    src: url("../assets/fonts/CrimsonText-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Crimson Text Italic";
+    src: url("../assets/fonts/CrimsonText-Italic.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Cormorant Garamond";
+    src: url("../assets/fonts/CormorantGaramond-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Cormorant Garamond Italic";
+    src: url("../assets/fonts/CormorantGaramond-Italic.ttf") format("truetype");
+}
+
+.crimson {
+    font-family: "Crimson Text", serif;
+    font-weight: 400;
+}
+
+.crimson-i {
+    font-family: "Crimson Text Italic", serif;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.cormorant {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 400;
+}
+
+.cormorant-i {
+    font-family: "Cormorant Garamond Italic", serif;
+    font-weight: 400;
+}
+
+/* poems */
+
+.poem-section {
+    padding: 20px;
+    margin-top: 25px;
+}
+
+.poem-list {
+    list-style-type: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-column-gap: 50px;
+    grid-row-gap: 75px;
+}
+
+.poem-item {
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #483533;
+}
+
+.poem-title {
+    font-size: 30px;
+    font-weight: 500;
+    margin: 0;
+    color: #8E8B7B;
+}
+
+.poem {
+    white-space: pre-wrap;
+    padding: 0 15px;
+    font-size: 25px;
+    color: #CBCCCC;
+    margin-top: 15px;
 }

@@ -327,14 +327,33 @@ func DeletePoem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func localCorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle preflight request
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func createServer() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/poems", GetPoems).Methods("GET")
-	r.HandleFunc("/poems", CreatePoem).Methods("POST")
-	r.HandleFunc("/poems/{id}", ShowPoem).Methods("GET")
-	r.HandleFunc("/poems/{id}", EditPoem).Methods("PUT")
-	r.HandleFunc("/poems/{id}", DeletePoem).Methods("DELETE")
+	p := r.PathPrefix("/api/v1").Subrouter()
+	p.Use(localCorsMiddleware)
+	p.Headers("Access-Control-Allow-Origin", "http://localhost:8000")
+	p.HandleFunc("/poems", GetPoems).Methods("GET")
+	p.HandleFunc("/poems", CreatePoem).Methods("POST")
+	p.HandleFunc("/poems/{id}", ShowPoem).Methods("GET")
+	p.HandleFunc("/poems/{id}", EditPoem).Methods("PUT")
+	p.HandleFunc("/poems/{id}", DeletePoem).Methods("DELETE")
 
 	err := http.ListenAndServe(":8080", r)
 
