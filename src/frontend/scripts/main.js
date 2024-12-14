@@ -9,7 +9,7 @@ async function getPoems() {
         const response = await fetch(url)
 
         if (!response.ok) {
-            errorBag.message = "Server responded with a status: " + response.status
+            errorBag.message = "The server returned an error: " + response.status
             errorBag.status = response.status
 
         }
@@ -21,6 +21,7 @@ async function getPoems() {
         errorBag.status = error.status
         errorBag.message = error.message
         console.error(error)
+        console.error(errorBag)
     }
 }
 
@@ -35,7 +36,7 @@ async function getPoem(id) {
         const response = await fetch(url)
 
         if (!response.ok) {
-            errorBag.message = "Server responded with a status: " + response.status
+            errorBag.message = "The server returned an error: " + response.status
             errorBag.status = response.status
         }
 
@@ -47,6 +48,7 @@ async function getPoem(id) {
         errorBag.status = error.status
         errorBag.message = error.message
         console.error(error)
+        console.error(errorBag)
 
         return error
     }
@@ -74,4 +76,25 @@ function setPoems(data) {
 
         console.log(data[i])
     }
+}
+
+function displayPoem(data) {
+    const poemSection = document.getElementById("poem")
+
+    const poem = document.createElement("div")
+    const title = document.createElement("h3")
+    const textDisplay = document.createElement("div")
+
+    poemSection.appendChild(poem)
+    poem.appendChild(title)
+    poem.appendChild(textDisplay)
+
+    poem.classList = "single-poem"
+    title.classList = "poem-title crimson"
+    textDisplay.classList = "poem crimson-i"
+
+    title.innerText = data.title
+    textDisplay.innerText = data.content
+
+    console.log(data)
 }

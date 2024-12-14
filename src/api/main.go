@@ -133,7 +133,6 @@ func GetPoems(w http.ResponseWriter, r *http.Request) {
 
 	res := ApiResponse{poems, "List of poems retrieved successfully", http.StatusOK}
 
-	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(res)
@@ -339,6 +338,8 @@ func localCorsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		fmt.Printf("Origin: %v\n", r.Header.Get("Origin"))
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -346,9 +347,10 @@ func localCorsMiddleware(next http.Handler) http.Handler {
 func createServer() {
 	r := mux.NewRouter()
 
+	fmt.Println("Server running at http://localhost:8080")
+
 	p := r.PathPrefix("/api/v1").Subrouter()
 	p.Use(localCorsMiddleware)
-	p.Headers("Access-Control-Allow-Origin", "http://localhost:8000")
 	p.HandleFunc("/poems", GetPoems).Methods("GET")
 	p.HandleFunc("/poems", CreatePoem).Methods("POST")
 	p.HandleFunc("/poems/{id}", ShowPoem).Methods("GET")
@@ -359,9 +361,8 @@ func createServer() {
 
 	if err != nil {
 		log.Fatal("Error while creating server:", err)
+		fmt.Print("Server shutting down.")
 	}
-
-	fmt.Println("Server running at localhost:8080")
 }
 
 func main() {

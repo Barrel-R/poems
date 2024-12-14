@@ -54,15 +54,18 @@
             </li>
         </ul>
     </nav>
-    <section class="poem-section">
-        <div class="poem-list" id="poemList"></div>
-    </section>
+    <div class="poem-display" id="poem">
+    </div>
 </body>
 <script>
-    getPoems()
+    const params = new URLSearchParams(window.location.search)
+    const poemId = params.get("poem")
+
+    getPoem(poemId)
         .then(response => {
-            if (response.data.length > 0 && response.status < 300) {
-                setPoems(response.data)
+            console.log(response)
+            if (response.status < 300) {
+                displayPoem(response.data)
             }
         })
         .catch(errors => {

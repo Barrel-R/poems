@@ -8,28 +8,39 @@ body {
 .navbar {
     background-color: #191010;
     padding: 10px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .nav-list {
     list-style: none;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    align-items: end;
+    gap: 0 50px;
 }
 
 .nav-link {
     color: #CBCCCC;
-    font-size: 35px;
-    font-weight: bold;
+    font-size: 20px;
     display: flex;
     align-items: center;
     gap: 2px;
-    border-bottom: 2px solid white;
     text-decoration: none;
 }
 
 .nav-link:hover {
     color: #8E8B7B;
+}
+
+.about {
+    margin-top: 1rem;
+    margin-left: 20px;
+}
+
+.about-main {
+    color: #CBCCCC;
 }
 
 
@@ -110,4 +121,8 @@ body {
     font-size: 25px;
     color: #CBCCCC;
     margin-top: 15px;
+}
+
+.poem-display {
+    margin: 3rem 5rem;
 }
