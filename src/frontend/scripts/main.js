@@ -70,31 +70,60 @@ function setPoems(data) {
         title.classList = "poem-title crimson"
         textDisplay.classList = "poem crimson-i"
 
+        item.id = data[i].id
         stanza = data[i]?.content.split("\n\n")
         title.innerText = data[i].title
         textDisplay.innerText = stanza[0] + "\n..."
+
+        item.addEventListener("click", (event) => {
+            window.location.href = "/poem.html?poem=" + data[i].id.toString()
+        })
 
         console.log(data[i])
     }
 }
 
-function displayPoem(data) {
+function displayPoem(response) {
     const poemSection = document.getElementById("poem")
+    const pagination = document.getElementById("pagination")
 
     const poem = document.createElement("div")
     const title = document.createElement("h3")
     const textDisplay = document.createElement("div")
+    const currentPoemId = document.createElement("a")
+    const paginationNextLink = document.createElement("a")
+    const paginationPrevLink = document.createElement("a")
+
+    if (response.pagination.previousPoemId != 0) {
+        paginationPrevLink.href = "/poem.html?poem=" + response.pagination.previousPoemId
+        paginationPrevLink.classList += "left-link"
+    } else {
+        paginationPrevLink.setAttribute("disabled", "")
+    }
 
     poemSection.appendChild(poem)
     poem.appendChild(title)
     poem.appendChild(textDisplay)
+    pagination.appendChild(paginationPrevLink)
+    pagination.appendChild(currentPoemId)
+    pagination.appendChild(paginationNextLink)
+
+    if (response.pagination.nextPoemId != 0) {
+        paginationNextLink.href = "/poem.html?poem=" + response.pagination.nextPoemId
+        paginationNextLink.classList += "right-link"
+    } else {
+        paginationNextLink.setAttribute("disabled", "")
+    }
 
     poem.classList = "single-poem"
     title.classList = "poem-title crimson"
     textDisplay.classList = "poem crimson-i"
 
-    title.innerText = data.title
-    textDisplay.innerText = data.content
-
-    console.log(data)
+    title.innerText = response.data.title
+    textDisplay.innerText = response.data.content
+    currentPoemId.innerText = response.data.id
+    paginationPrevLink.innerHTML = `&laquo`
+    paginationNextLink.innerHTML = `&raquo`
+    currentPoemId.classList += "active"
+    currentPoemId.href = "#"
 }

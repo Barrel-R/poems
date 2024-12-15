@@ -34,6 +34,18 @@ type ApiResponse struct {
 	Status  uint        `json:"status"`
 }
 
+type ApiPaginatedResponse struct {
+	Data       interface{}      `json:"data"`
+	Message    string           `json:"message"`
+	Pagination SinglePagination `json:"pagination"`
+	Status     uint             `json:"status"`
+}
+
+type SinglePagination struct {
+	PreviousPoemId uint32 `json:"previousPoemId"`
+	NextPoemId     uint32 `json:"nextPoemId"`
+}
+
 type NotFoundError struct {
 	arg     uint32
 	message string
@@ -75,6 +87,31 @@ func getGreatestId() uint32 {
 	}
 
 	return id
+}
+
+func getPagination(id uint32) SinglePagination {
+	var poems []RawPoem
+
+	ReadPoemFile(&poems)
+
+	previous := uint32(0)
+	next := uint32(0)
+
+	for _, poem := range poems {
+		if poem.Id == id {
+			continue
+		}
+
+		if next == 0 && poem.Id > id {
+			next = poem.Id
+		}
+
+		if poem.Id > previous && poem.Id < id {
+			previous = poem.Id
+		}
+	}
+
+	return SinglePagination{previous, next}
 }
 
 func createPoemTextFile(poem Poem) error {
@@ -151,8 +188,9 @@ func ShowPoem(w http.ResponseWriter, r *http.Request) {
 
 	rawPoem, err := FindPoem(uint32(poemId), rawPoems)
 	poem, err := getPoemContent(rawPoem)
+	pagination := getPagination(uint32(poemId))
 
-	res := ApiResponse{poem, "Poem retrieved successfully", http.StatusOK}
+	res := ApiPaginatedResponse{poem, "Poem retrieved successfully", pagination, http.StatusOK}
 
 	if err != nil {
 		log.Fatalf("Couldn't get the poem content: %v\n", err)
