@@ -376,8 +376,6 @@ func localCorsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Printf("Origin: %v\n", r.Header.Get("Origin"))
-
 		next.ServeHTTP(w, r)
 	})
 }

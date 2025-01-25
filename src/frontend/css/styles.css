@@ -141,7 +141,11 @@ body {
     position: absolute;
     border-radius: 10px;
     top: 90%;
-    left: 50%;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
 }
 
 /* Pagination */
